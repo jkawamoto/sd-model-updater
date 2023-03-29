@@ -24,6 +24,14 @@ import (
 	"github.com/jkawamoto/go-civitai/models"
 )
 
+const (
+	SafetensorFormat = "safetensor"
+	PickleFormat     = "pickle"
+)
+
+// ErrUnknownFormat returns if the given format is neither safetensor nor pickle.
+var ErrUnknownFormat = fmt.Errorf("unknown format is specified")
+
 var defaultTargets = []string{
 	filepath.Join("models", "hypernetworks"),
 	filepath.Join("models", "Lora"),
@@ -83,8 +91,8 @@ func update(ctx context.Context, cli Client, name string) error {
 			return nil
 		}
 
-		fmt.Printf("Downloading %v from %v... ", ver.Name, ver.DownloadURL)
-		if err = cli.Download(ctx, ver.DownloadURL, filepath.Dir(name)); err != nil {
+		fmt.Printf("Downloading %v... ", ver.Name)
+		if err = cli.Download(ctx, ver, filepath.Dir(name)); err != nil {
 			return err
 		}
 		fmt.Println("Done")
@@ -112,8 +120,8 @@ func update(ctx context.Context, cli Client, name string) error {
 
 		for _, n := range selected {
 			ver := model.Candidates[n]
-			fmt.Printf("Downloading %v from %v... ", n, ver.DownloadURL)
-			if err = cli.Download(ctx, ver.DownloadURL, filepath.Dir(name)); err != nil {
+			fmt.Printf("Downloading %v... ", ver.Name)
+			if err = cli.Download(ctx, ver, filepath.Dir(name)); err != nil {
 				return err
 			}
 			fmt.Println("Done")
@@ -135,6 +143,19 @@ func update(ctx context.Context, cli Client, name string) error {
 }
 
 func run(ctx context.Context) error {
+	preferredFormat := SafetensorFormat
+	flag.Func(
+		"format",
+		fmt.Sprintf("prefered file format: %v or %v (default %v)", SafetensorFormat, PickleFormat, SafetensorFormat),
+		func(s string) error {
+			if s != SafetensorFormat && s != PickleFormat {
+				return ErrUnknownFormat
+			}
+			preferredFormat = s
+			return nil
+		},
+	)
+
 	flag.Parse()
 	targets := flag.Args()
 	if len(targets) == 0 {
@@ -147,7 +168,7 @@ func run(ctx context.Context) error {
 		}
 	}
 
-	cli := NewClient()
+	cli := NewClient(preferredFormat)
 	for _, name := range targets {
 		stat, err := os.Stat(name)
 		if err != nil {
