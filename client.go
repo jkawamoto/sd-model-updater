@@ -28,8 +28,10 @@ import (
 )
 
 var (
-	ErrFileNotFound     = fmt.Errorf("model files are not found in this version")
-	ErrFileHashNotMatch = fmt.Errorf("file hash doesn't match")
+	ErrFileNotFound     = errors.New("model files are not found in this version")
+	ErrFileHashNotMatch = errors.New("file hash doesn't match")
+	ErrGetFailure       = errors.New("failed to get a file")
+	ErrNoFilename       = errors.New("failed to get a filename")
 )
 
 type Client struct {
@@ -86,12 +88,18 @@ func (cli Client) Download(ctx context.Context, ver *models.ModelVersion, dir st
 		return err
 	}
 	defer func() {
+		if _, e := io.Copy(io.Discard, res.Body); e != nil {
+			err = errors.Join(err, e)
+		}
 		err = errors.Join(err, res.Body.Close())
 	}()
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("%w: %v", ErrGetFailure, res.Status)
+	}
 
 	_, params, err := mime.ParseMediaType(res.Header.Get("Content-Disposition"))
 	if err != nil {
-		return err
+		return errors.Join(ErrNoFilename, err)
 	}
 
 	hash := sha256.New()
