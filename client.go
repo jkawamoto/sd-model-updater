@@ -10,12 +10,16 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/jkawamoto/go-civitai/client"
 	"github.com/jkawamoto/go-civitai/client/operations"
@@ -23,14 +27,24 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 )
 
+var (
+	ErrFileNotFound     = errors.New("model files are not found in this version")
+	ErrFileHashNotMatch = errors.New("file hash doesn't match")
+	ErrGetFailure       = errors.New("failed to get a file")
+	ErrNoFilename       = errors.New("failed to get a filename")
+)
+
 type Client struct {
 	clientService operations.ClientService
 	httpClient    *http.Client
+
+	PreferredFormat string
 }
 
-func NewClient() Client {
+func NewClient(preferredFormat string) Client {
 	return Client{
-		clientService: client.Default.Operations,
+		clientService:   client.Default.Operations,
+		PreferredFormat: preferredFormat,
 	}
 }
 
@@ -54,32 +68,62 @@ func (cli Client) GetModel(ctx context.Context, id int64) (*models.Model, error)
 	return res.GetPayload(), nil
 }
 
+// Download gets a model file associated with the given version and stores it into the given directory.
+func (cli Client) Download(ctx context.Context, ver *models.ModelVersion, dir string) (err error) {
+	var file *models.File
+	for _, f := range ver.Files {
+		if strings.ToLower(f.Format) == cli.PreferredFormat {
+			file = f
+		}
+		if f.Primary && file == nil {
+			file = f
+		}
+	}
+	if file == nil {
+		return ErrFileNotFound
+	}
+
+	res, err := ctxhttp.Get(ctx, cli.httpClient, file.DownloadURL)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if _, e := io.Copy(io.Discard, res.Body); e != nil {
+			err = errors.Join(err, e)
+		}
+		err = errors.Join(err, res.Body.Close())
+	}()
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("%w: %v", ErrGetFailure, res.Status)
+	}
+
+	_, params, err := mime.ParseMediaType(res.Header.Get("Content-Disposition"))
+	if err != nil {
+		return errors.Join(ErrNoFilename, err)
+	}
+
+	hash := sha256.New()
+	dest := filepath.Join(dir, params["filename"])
+	err = writeFile(dest, io.TeeReader(res.Body, hash))
+	if err != nil {
+		return err
+	}
+	if hex.EncodeToString(hash.Sum(nil)) != strings.ToLower(file.Hashes.SHA256) {
+		// if hash doesn't match, remove the downloaded file.
+		return errors.Join(ErrFileHashNotMatch, os.Remove(dest))
+	}
+	return nil
+}
+
 func writeFile(name string, r io.Reader) (err error) {
 	f, err := os.Create(name)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		err = errors.Join(f.Close())
+		err = errors.Join(err, f.Close())
 	}()
 
 	_, err = io.Copy(f, r)
 	return err
-}
-
-func (cli Client) Download(ctx context.Context, url, dir string) (err error) {
-	res, err := ctxhttp.Get(ctx, cli.httpClient, url)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		err = errors.Join(res.Body.Close())
-	}()
-
-	_, params, err := mime.ParseMediaType(res.Header.Get("Content-Disposition"))
-	if err != nil {
-		return err
-	}
-
-	return writeFile(filepath.Join(dir, params["filename"]), res.Body)
 }
