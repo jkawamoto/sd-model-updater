@@ -105,6 +105,7 @@ func TestClient_Download(t *testing.T) {
 		preferredFormat string
 		ver             *models.ModelVersion
 		err             error
+		setup           func(t *testing.T, dir string)
 	}{
 		{
 			name:            "prefer: safetensor, exists",
@@ -247,10 +248,40 @@ func TestClient_Download(t *testing.T) {
 			},
 			err: ErrFileHashNotMatch,
 		},
+		{
+			name:            "file already exists",
+			preferredFormat: SafetensorFormat,
+			ver: &models.ModelVersion{
+				Files: []*models.File{
+					{
+						DownloadURL: joinURL(t, server.URL, target),
+						Format:      "SafeTensor",
+						Hashes: &models.Hash{
+							SHA256: hash,
+						},
+					},
+				},
+			},
+			err: os.ErrExist,
+			setup: func(t *testing.T, dir string) {
+				t.Helper()
+				f, err := os.Create(filepath.Join(dir, target))
+				if err != nil {
+					t.Fatal(err)
+				}
+				err = f.Close()
+				if err != nil {
+					t.Fatal()
+				}
+			},
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			dir := t.TempDir()
+			if c.setup != nil {
+				c.setup(t, dir)
+			}
 
 			cli := NewClient(c.preferredFormat)
 			cli.httpClient = server.Client()

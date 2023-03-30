@@ -116,6 +116,10 @@ func (cli Client) Download(ctx context.Context, ver *models.ModelVersion, dir st
 }
 
 func writeFile(name string, r io.Reader) (err error) {
+	if _, err = os.Stat(name); err == nil {
+		return fmt.Errorf("%v already exists: %w", name, os.ErrExist)
+	}
+
 	f, err := os.Create(name)
 	if err != nil {
 		return err
