@@ -35,7 +35,7 @@ Checking for updates to rola_v1.safetensors... Multiple newer versions are found
 If you don’t select any versions, it’ll skip downloading any versions.
 
 
-## Check for updates to specific files or directories
+### Check for updates to specific files or directories
 If you want to check for updates to specific files or directories, pass the paths to the files or directories to the command.
 For example, this command will only check for updates to textual inversions.
 
@@ -44,9 +44,31 @@ sd-model-updater embeddings
 ```
 
 
+### Download pickle files instead of safetensors
+By default, this command downloads safetensor files. If you prefer pickle files, give `-format picke` to the command.
+However, if a model version only provides safetensor file, it will be downloaded.
+
+
+## Command-line options
+This is the usage of this command:
+```
+Usage:
+  sd-model-updater [path...]
+
+[path...] is an optional list of paths to the files or directories.
+This command checks for updates to the given files or files in the given directories.
+
+If not paths are given, this command considers the current directory is the root of web UI,
+and checks updates to the files in the default model directories,
+such as models/Stable-diffusion, models/Lora, etc.
+
+Flags:
+  -format value       prefered file format: safetensor or pickle (default safetensor)
+```
+
+
 ## Known issues
 * If you already have multiple versions in your computer, it may offer to update to the version you already have.
-* If a version has multiple files such as `.safetensors` and `.ckpt`, it’ll only download the primary file.
 
 
 ## License
