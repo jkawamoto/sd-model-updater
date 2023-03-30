@@ -217,7 +217,7 @@ func run(ctx context.Context) error {
 func main() {
 	err := run(context.Background())
 	if err != nil {
-		fmt.Printf(color.RedString("Failed to check for updates: %v\n", err))
+		fmt.Println(color.RedString("Failed to check for updates: %v", err))
 		os.Exit(1)
 	}
 }

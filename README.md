@@ -1,4 +1,6 @@
 # StableDiffusion web UI model updater
+[![Go application](https://github.com/jkawamoto/sd-model-updater/actions/workflows/test.yaml/badge.svg)](https://github.com/jkawamoto/sd-model-updater/actions/workflows/test.yaml)
+
 Check for updates to your models on Civitai and download new versions.
 
 
@@ -12,13 +14,13 @@ It’ll check for updates to each model. If there is a newer version, it’ll as
 
 ```
 Checking for updates to checkpoint_v10.safetensors... Newer version is found
-? Do you want to update v1.0 ➜ v2.0 (y/N) 
+? Do you want to update v1.0 ➜ v2.0 (y/N)
 ```
 
 Hit `y` and enter if you want, then it’ll download the version and ask if you want to remove the old one.
 ```
 Downloading v2.0 from https://civitai.com/api/download/models/01234... Done
-? Do you want to remove the old version: checkpoint_v10.safetensors (y/N) 
+? Do you want to remove the old version: checkpoint_v10.safetensors (y/N)
 ```
 
 If there are multiple newer versions are available, you can choose which versions to download.
