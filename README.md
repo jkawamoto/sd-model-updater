@@ -1,4 +1,6 @@
 # StableDiffusion web UI model updater
+[![Go application](https://github.com/jkawamoto/sd-model-updater/actions/workflows/test.yaml/badge.svg)](https://github.com/jkawamoto/sd-model-updater/actions/workflows/test.yaml)
+
 Check for updates to your models on Civitai and download new versions.
 
 
