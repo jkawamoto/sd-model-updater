@@ -10,7 +10,6 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"io"
@@ -18,6 +17,7 @@ import (
 	"time"
 
 	"github.com/jkawamoto/go-civitai/models"
+	"github.com/zeebo/blake3"
 )
 
 // FileHash returns the SHA256 hash of the given named file.
@@ -30,7 +30,7 @@ func FileHash(name string) (_ string, err error) {
 		err = errors.Join(err, f.Close())
 	}()
 
-	hash := sha256.New()
+	hash := blake3.New()
 	_, err = io.Copy(hash, f)
 	if err != nil {
 		return "", err
