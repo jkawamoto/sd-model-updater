@@ -10,7 +10,6 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -22,10 +21,12 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/zeebo/blake3"
+
 	"github.com/jkawamoto/go-civitai/models"
 )
 
-func sha256hash(t *testing.T, name string) string {
+func modelHash(t *testing.T, name string) string {
 	t.Helper()
 
 	f, err := os.Open(name)
@@ -38,7 +39,7 @@ func sha256hash(t *testing.T, name string) string {
 		}
 	}()
 
-	hash := sha256.New()
+	hash := blake3.New()
 	if _, err = io.Copy(hash, f); err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +71,7 @@ func TestNewClient(t *testing.T) {
 func TestClient_Download(t *testing.T) {
 	ctx := context.Background()
 	target := "LICENSE"
-	hash := sha256hash(t, target)
+	hash := modelHash(t, target)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/"+target, func(res http.ResponseWriter, req *http.Request) {
@@ -121,7 +122,7 @@ func TestClient_Download(t *testing.T) {
 						DownloadURL: joinURL(t, server.URL, target),
 						Format:      "SafeTensor",
 						Hashes: &models.Hash{
-							SHA256: hash,
+							BLAKE3: hash,
 						},
 					},
 				},
@@ -137,7 +138,7 @@ func TestClient_Download(t *testing.T) {
 						Format:      "Pickle",
 						Primary:     true,
 						Hashes: &models.Hash{
-							SHA256: hash,
+							BLAKE3: hash,
 						},
 					},
 				},
@@ -170,7 +171,7 @@ func TestClient_Download(t *testing.T) {
 						DownloadURL: joinURL(t, server.URL, target),
 						Format:      "Pickle",
 						Hashes: &models.Hash{
-							SHA256: hash,
+							BLAKE3: hash,
 						},
 					},
 				},
@@ -186,7 +187,7 @@ func TestClient_Download(t *testing.T) {
 						Format:      "SafeTensor",
 						Primary:     true,
 						Hashes: &models.Hash{
-							SHA256: hash,
+							BLAKE3: hash,
 						},
 					},
 				},
@@ -241,7 +242,7 @@ func TestClient_Download(t *testing.T) {
 						Format:      "SafeTensor",
 						Primary:     true,
 						Hashes: &models.Hash{
-							SHA256: "hash",
+							BLAKE3: "hash",
 						},
 					},
 				},
@@ -257,7 +258,7 @@ func TestClient_Download(t *testing.T) {
 						DownloadURL: joinURL(t, server.URL, target),
 						Format:      "SafeTensor",
 						Hashes: &models.Hash{
-							SHA256: hash,
+							BLAKE3: hash,
 						},
 					},
 				},
@@ -292,7 +293,7 @@ func TestClient_Download(t *testing.T) {
 			}
 
 			if c.err == nil {
-				h := sha256hash(t, filepath.Join(dir, target))
+				h := modelHash(t, filepath.Join(dir, target))
 				if h != hash {
 					t.Errorf("expect %v, got %v", hash, h)
 				}

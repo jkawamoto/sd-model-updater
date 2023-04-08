@@ -10,7 +10,6 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -24,6 +23,7 @@ import (
 	"github.com/jkawamoto/go-civitai/client"
 	"github.com/jkawamoto/go-civitai/client/operations"
 	"github.com/jkawamoto/go-civitai/models"
+	"github.com/zeebo/blake3"
 	"golang.org/x/net/context/ctxhttp"
 )
 
@@ -102,13 +102,13 @@ func (cli Client) Download(ctx context.Context, ver *models.ModelVersion, dir st
 		return errors.Join(ErrNoFilename, err)
 	}
 
-	hash := sha256.New()
+	hash := blake3.New()
 	dest := filepath.Join(dir, params["filename"])
 	err = writeFile(dest, io.TeeReader(res.Body, hash))
 	if err != nil {
 		return err
 	}
-	if hex.EncodeToString(hash.Sum(nil)) != strings.ToLower(file.Hashes.SHA256) {
+	if hex.EncodeToString(hash.Sum(nil)) != strings.ToLower(file.Hashes.BLAKE3) {
 		// if hash doesn't match, remove the downloaded file.
 		return errors.Join(ErrFileHashNotMatch, os.Remove(dest))
 	}
