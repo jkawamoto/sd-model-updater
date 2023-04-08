@@ -7,7 +7,7 @@ require (
 	github.com/fatih/color v1.15.0
 	github.com/jkawamoto/go-civitai v0.1.1
 	github.com/zeebo/blake3 v0.2.3
-	golang.org/x/net v0.8.0
+	golang.org/x/net v0.9.0
 )
 
 require (
@@ -39,7 +39,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/term v0.7.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/text v0.9.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
