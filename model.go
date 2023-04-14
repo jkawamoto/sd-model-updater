@@ -14,11 +14,15 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/jkawamoto/go-civitai/models"
 	"github.com/zeebo/blake3"
 )
+
+const pbTemplate = `{{with string . "prefix"}}{{.}} {{end}}{{bar . }} {{percent . }}{{with string . "suffix"}} {{.}}{{end}}`
 
 // FileHash returns the SHA256 hash of the given named file.
 func FileHash(name string) (_ string, err error) {
@@ -30,8 +34,20 @@ func FileHash(name string) (_ string, err error) {
 		err = errors.Join(err, f.Close())
 	}()
 
+	info, err := f.Stat()
+	if err != nil {
+		return "", err
+	}
+
+	bar := pb.New(int(info.Size()))
+	bar.SetTemplate(pbTemplate)
+	bar.Set(pb.SIBytesPrefix, true)
+	bar.Set("prefix", filepath.Base(name)+" ")
+	bar.Start()
+	defer bar.Finish()
+
 	hash := blake3.New()
-	_, err = io.Copy(hash, f)
+	_, err = io.Copy(hash, bar.NewProxyReader(f))
 	if err != nil {
 		return "", err
 	}

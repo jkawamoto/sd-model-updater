@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/jkawamoto/go-civitai/client"
 	"github.com/jkawamoto/go-civitai/client/operations"
 	"github.com/jkawamoto/go-civitai/models"
@@ -101,10 +102,17 @@ func (cli Client) Download(ctx context.Context, ver *models.ModelVersion, dir st
 	if err != nil {
 		return errors.Join(ErrNoFilename, err)
 	}
+	name := params["filename"]
+
+	bar := pb.New(int(file.SizeKB * 1024))
+	bar.Set(pb.SIBytesPrefix, true)
+	bar.Set("prefix", filepath.Base(name)+" ")
+	bar.Start()
+	defer bar.Finish()
 
 	hash := blake3.New()
-	dest := filepath.Join(dir, params["filename"])
-	err = writeFile(dest, io.TeeReader(res.Body, hash))
+	dest := filepath.Join(dir, name)
+	err = writeFile(dest, io.TeeReader(bar.NewProxyReader(res.Body), hash))
 	if err != nil {
 		return err
 	}

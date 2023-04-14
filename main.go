@@ -53,7 +53,6 @@ func isModelFile(name string) bool {
 }
 
 func update(ctx context.Context, cli Client, name string) error {
-	fmt.Printf("Checking for updates to %v... ", filepath.Base(name))
 	model, err := GetModel(ctx, cli, name)
 	if err != nil {
 		if coder, ok := err.(interface {
@@ -61,6 +60,7 @@ func update(ctx context.Context, cli Client, name string) error {
 		}); ok {
 			if coder.Code() == http.StatusNotFound {
 				fmt.Println(color.YellowString("Model information is not found"))
+				fmt.Println()
 				return nil
 			}
 		}
@@ -71,6 +71,7 @@ func update(ctx context.Context, cli Client, name string) error {
 	case 0:
 		// no updated models.
 		fmt.Println("No updates are found")
+		fmt.Println()
 		return nil
 
 	case 1:
@@ -88,14 +89,14 @@ func update(ctx context.Context, cli Client, name string) error {
 			return err
 		}
 		if !confirm {
+			fmt.Println(color.YellowString("Skipped downloading the newer model"))
+			fmt.Println()
 			return nil
 		}
 
-		fmt.Printf("Downloading %v... ", ver.Name)
 		if err = cli.Download(ctx, ver, filepath.Dir(name)); err != nil {
 			return err
 		}
-		fmt.Println("Done")
 
 	default:
 		fmt.Println(color.GreenString("Multiple newer versions are found"))
@@ -115,16 +116,15 @@ func update(ctx context.Context, cli Client, name string) error {
 		}
 		if len(selected) == 0 {
 			fmt.Println(color.YellowString("Skipped downloading any models"))
+			fmt.Println()
 			return nil
 		}
 
 		for _, n := range selected {
 			ver := model.Candidates[n]
-			fmt.Printf("Downloading %v... ", ver.Name)
 			if err = cli.Download(ctx, ver, filepath.Dir(name)); err != nil {
 				return err
 			}
-			fmt.Println("Done")
 		}
 	}
 
@@ -139,6 +139,7 @@ func update(ctx context.Context, cli Client, name string) error {
 		return nil
 	}
 
+	fmt.Println()
 	return os.Remove(name)
 }
 
