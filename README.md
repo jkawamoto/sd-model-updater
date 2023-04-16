@@ -13,21 +13,17 @@ Run `sd-model-updater` (or `sd-model-updater.exe` for windows users).
 It’ll check for updates to each model. If there is a newer version, it’ll ask if you want to download the version:
 
 ```
-Checking for updates to checkpoint_v10.safetensors... Newer version is found
+Checkpoint ABC has a newer version
 ? Do you want to update v1.0 ➜ v2.0 (y/N)
 ```
 
-Hit `y` and enter if you want, then it’ll download the version and ask if you want to remove the old one.
-```
-Downloading v2.0 from https://civitai.com/api/download/models/01234... Done
-? Do you want to remove the old version: checkpoint_v10.safetensors (y/N)
-```
+Hit `y` and enter if you want, then it’ll download the version.
 
 If there are multiple newer versions are available, you can choose which versions to download.
 
 ```
-Checking for updates to rola_v1.safetensors... Multiple newer versions are found
-? Which versions do you want to download  [Use arrows to move, space to select, <right> to all, <left> to none, type to filter]
+RoLA ABC has multiple newer versions
+? Which versions do you want to download (current: v1) [Use arrows to move, space to select, <right> to all, <left> to none, type to filter]
 > [ ]  v2
   [ ]  v3
 ```
@@ -45,7 +41,7 @@ sd-model-updater embeddings
 
 
 ### Download pickle files instead of safetensors
-By default, this command downloads safetensor files. If you prefer pickle files, give `-format picke` to the command.
+By default, this command downloads safetensor files. If you prefer pickle files, give `-format pickle` to the command.
 However, if a model version only provides safetensor file, it will be downloaded.
 
 
@@ -65,11 +61,6 @@ such as models/Stable-diffusion, models/Lora, etc.
 Flags:
   -format value       prefered file format: safetensor or pickle (default safetensor)
 ```
-
-
-## Known issues
-* If you already have multiple versions in your computer, it may offer to update to the version you already have.
-
 
 ## License
 This software is released under the MIT License, see [LICENSE](LICENSE).
