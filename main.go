@@ -13,15 +13,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/fatih/color"
-	"github.com/jkawamoto/go-civitai/models"
 )
 
 const (
@@ -42,6 +39,7 @@ var defaultTargets = []string{
 
 var modelFileExtensions = []string{".safetensors", ".ckpt", ".pt"}
 
+// isModelFile returns true if the given name represents a model file.
 func isModelFile(name string) bool {
 	ext := filepath.Ext(name)
 	for _, e := range modelFileExtensions {
@@ -50,97 +48,6 @@ func isModelFile(name string) bool {
 		}
 	}
 	return false
-}
-
-func update(ctx context.Context, cli Client, name string) error {
-	model, err := GetModel(ctx, cli, name)
-	if err != nil {
-		if coder, ok := err.(interface {
-			Code() int
-		}); ok {
-			if coder.Code() == http.StatusNotFound {
-				fmt.Println(color.YellowString("Model information is not found"))
-				fmt.Println()
-				return nil
-			}
-		}
-		return err
-	}
-
-	switch len(model.Candidates) {
-	case 0:
-		// no updated models.
-		fmt.Println("No updates are found")
-		fmt.Println()
-		return nil
-
-	case 1:
-		fmt.Println(color.GreenString("Newer version is found"))
-		var ver *models.ModelVersion
-		for _, v := range model.Candidates {
-			ver = v
-		}
-
-		var confirm bool
-		err = survey.AskOne(&survey.Confirm{
-			Message: fmt.Sprintf("Do you want to update %v \u279c %v", model.CurrentVersion, ver.Name),
-		}, &confirm)
-		if err != nil {
-			return err
-		}
-		if !confirm {
-			fmt.Println(color.YellowString("Skipped downloading the newer model"))
-			fmt.Println()
-			return nil
-		}
-
-		if err = cli.Download(ctx, ver, filepath.Dir(name)); err != nil {
-			return err
-		}
-
-	default:
-		fmt.Println(color.GreenString("Multiple newer versions are found"))
-
-		var opts []string
-		for n := range model.Candidates {
-			opts = append(opts, n)
-		}
-
-		var selected []string
-		err = survey.AskOne(&survey.MultiSelect{
-			Message: "Which versions do you want to download",
-			Options: opts,
-		}, &selected)
-		if err != nil {
-			return err
-		}
-		if len(selected) == 0 {
-			fmt.Println(color.YellowString("Skipped downloading any models"))
-			fmt.Println()
-			return nil
-		}
-
-		for _, n := range selected {
-			ver := model.Candidates[n]
-			if err = cli.Download(ctx, ver, filepath.Dir(name)); err != nil {
-				return err
-			}
-		}
-	}
-
-	var confirm bool
-	err = survey.AskOne(&survey.Confirm{
-		Message: fmt.Sprintf("Do you want to remove the old version: %v", filepath.Base(name)),
-	}, &confirm)
-	if err != nil {
-		return err
-	}
-	if !confirm {
-		return nil
-	}
-
-	fmt.Println()
-	return os.Remove(name)
 }
 
 func run(ctx context.Context) error {
@@ -177,37 +84,44 @@ func run(ctx context.Context) error {
 		}
 
 		if !stat.IsDir() {
-			err = update(ctx, cli, name)
+			update, err := findUpdate(ctx, cli, name)
+			if err != nil {
+				if coder, ok := err.(interface {
+					Code() int
+				}); ok {
+					if coder.Code() == http.StatusNotFound {
+						fmt.Println(color.YellowString("Model information is not found"))
+						continue
+					}
+				}
+				fmt.Println(color.RedString("Failed to find updates to %v: %v", filepath.Base(name), err))
+				continue
+			}
+
+			err = update.run(ctx, cli, filepath.Dir(name))
 			if err != nil {
 				if errors.Is(err, terminal.InterruptErr) {
 					return err
 				}
-				fmt.Printf(color.RedString("Failed to update %v: %v\n"), filepath.Base(name), err)
+				fmt.Println(color.RedString("Failed to update %v: %v", filepath.Base(name), err))
 			}
 		} else {
-			fmt.Println("\u279c", name)
-			err = filepath.WalkDir(name, func(path string, d fs.DirEntry, err error) error {
-				if err != nil {
-					return err
-				}
-				if ctx.Err() != nil {
-					return ctx.Err()
-				}
-				if !isModelFile(path) {
-					return nil
-				}
+			fmt.Println("Retrieving models in", name)
 
-				err = update(ctx, cli, path)
+			updates, err := findUpdatesFromDir(ctx, cli, name)
+			if err != nil {
+				fmt.Println(color.RedString("Failed to find updates to models in %v: %v", name, err))
+				continue
+			}
+
+			for _, u := range updates {
+				err = u.run(ctx, cli, name)
 				if err != nil {
 					if errors.Is(err, terminal.InterruptErr) {
 						return err
 					}
-					fmt.Printf(color.RedString("Failed to update %v: %v\n"), filepath.Base(name), err)
+					fmt.Println(color.RedString("Failed to update %v: %v", u.ModelName, err))
 				}
-				return nil
-			})
-			if err != nil {
-				return err
 			}
 		}
 	}
