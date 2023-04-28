@@ -6,7 +6,8 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/cheggaaa/pb/v3 v3.1.2
 	github.com/fatih/color v1.15.0
-	github.com/jkawamoto/go-civitai v0.1.1
+	github.com/go-openapi/strfmt v0.21.7
+	github.com/jkawamoto/go-civitai v0.2.1
 	github.com/zeebo/blake3 v0.2.3
 	golang.org/x/net v0.9.0
 )
@@ -21,9 +22,8 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/loads v0.21.2 // indirect
-	github.com/go-openapi/runtime v0.25.0 // indirect
-	github.com/go-openapi/spec v0.20.8 // indirect
-	github.com/go-openapi/strfmt v0.21.7 // indirect
+	github.com/go-openapi/runtime v0.26.0 // indirect
+	github.com/go-openapi/spec v0.20.9 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-openapi/validate v0.22.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
