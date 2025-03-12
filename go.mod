@@ -9,7 +9,7 @@ require (
 	github.com/go-openapi/strfmt v0.21.7
 	github.com/jkawamoto/go-civitai v0.2.1
 	github.com/zeebo/blake3 v0.2.3
-	golang.org/x/net v0.23.0
+	golang.org/x/net v0.33.0
 )
 
 require (
@@ -41,9 +41,9 @@ require (
 	go.mongodb.org/mongo-driver v1.11.4 // indirect
 	go.opentelemetry.io/otel v1.14.0 // indirect
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
-	golang.org/x/term v0.18.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/term v0.27.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
