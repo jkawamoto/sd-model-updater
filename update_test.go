@@ -52,16 +52,16 @@ func Test_fileHash(t *testing.T) {
 func Test_modelVersionList(t *testing.T) {
 	list := modelVersionList{
 		{
-			ModelID:   3,
-			CreatedAt: strfmt.DateTime(time.Now().Add(3 * time.Hour)),
+			ID:          3,
+			PublishedAt: strfmt.DateTime(time.Now().Add(3 * time.Hour)),
 		},
 		{
-			ModelID:   1,
-			CreatedAt: strfmt.DateTime(time.Now().Add(1 * time.Hour)),
+			ID:          1,
+			PublishedAt: strfmt.DateTime(time.Now().Add(1 * time.Hour)),
 		},
 		{
-			ModelID:   2,
-			CreatedAt: strfmt.DateTime(time.Now().Add(2 * time.Hour)),
+			ID:          2,
+			PublishedAt: strfmt.DateTime(time.Now().Add(2 * time.Hour)),
 		},
 	}
 
@@ -104,7 +104,7 @@ func Test_modelVersionList(t *testing.T) {
 		}
 
 		l.Swap(0, 2)
-		if l[0].ModelID != list[2].ModelID || l[1].ModelID != list[1].ModelID || l[2].ModelID != list[0].ModelID {
+		if l[0].ID != list[2].ID || l[1].ID != list[1].ID || l[2].ID != list[0].ID {
 			t.Error("swapped list doesn't match")
 		}
 	})
