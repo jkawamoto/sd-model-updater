@@ -1,6 +1,6 @@
-// model.go
+// update.go
 //
-// Copyright (c) 2023 Junpei Kawamoto
+// Copyright (c) 2023-2025 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -80,7 +80,7 @@ func findUpdate(ctx context.Context, cli Client, name string) (*Update, error) {
 		return nil, err
 	}
 
-	m, err := cli.GetModel(ctx, cur.ModelID)
+	m, err := cli.GetModel(ctx, cur.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func findUpdate(ctx context.Context, cli Client, name string) (*Update, error) {
 		Candidates:     make(map[string]*models.ModelVersion),
 	}
 	for _, v := range m.ModelVersions {
-		if time.Time(v.CreatedAt).After(time.Time(cur.CreatedAt)) {
+		if time.Time(v.PublishedAt).After(time.Time(cur.PublishedAt)) {
 			res.Candidates[v.Name] = v
 		}
 	}
@@ -107,7 +107,7 @@ func (m modelVersionList) Len() int {
 }
 
 func (m modelVersionList) Less(i, j int) bool {
-	return time.Time(m[i].CreatedAt).Before(time.Time(m[j].CreatedAt))
+	return time.Time(m[i].PublishedAt).Before(time.Time(m[j].PublishedAt))
 }
 
 func (m modelVersionList) Swap(i, j int) {
@@ -146,7 +146,7 @@ func findUpdatesFromDir(ctx context.Context, cli Client, dir string) ([]*Update,
 			return err
 		}
 
-		ms[v.ModelID] = append(ms[v.ModelID], v)
+		ms[v.ID] = append(ms[v.ID], v)
 		return nil
 	})
 	if err != nil {
@@ -166,7 +166,7 @@ func findUpdatesFromDir(ctx context.Context, cli Client, dir string) ([]*Update,
 		sort.Sort(sort.Reverse(modelVersionList(model.ModelVersions)))
 		candidates := make(map[string]*models.ModelVersion)
 		for _, v := range model.ModelVersions {
-			if time.Time(v.CreatedAt).After(time.Time(cur.CreatedAt)) {
+			if time.Time(v.PublishedAt).After(time.Time(cur.PublishedAt)) {
 				candidates[v.Name] = v
 			}
 		}
