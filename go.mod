@@ -9,7 +9,7 @@ require (
 	github.com/go-openapi/strfmt v0.23.0
 	github.com/jkawamoto/go-civitai v0.2.3
 	github.com/zeebo/blake3 v0.2.4
-	golang.org/x/net v0.37.0
+	golang.org/x/net v0.38.0
 )
 
 require (
